@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model House {
+  id        String          @id @default(uuid())   // UUID primary key
+  name      String
+  crestUrl  String?                                   // optional image URL
+  joinCode  String          @unique
+  members   Member[]
+  scores    Score[]
+  factions  FactionMember[]
+  createdAt DateTime        @default(now())
+}
+
+model Member {
+  id        String          @id @default(uuid())   // UUID primary key
+  houseId   String
+  house     House           @relation(fields: [houseId], references: [id])
+  clientId  String                                   // identifies device/user
+  name      String
+  joinedAt  DateTime      @default(now())
+
+  @@unique([houseId, clientId])                      // prevents duplicate membership
+}
+
+model Score {
+  id          String       @id @default(uuid())   // UUID primary key
+  houseId     String
+  house       House       @relation(fields: [houseId], references: [id])
+  gameDay     Int
+  choleric    Int
+  melancholic Int
+  sanguine    Int
+  phlegmatic  Int
+  createdAt   DateTime    @default(now())
+}
+
+model Faction {
+  id        String          @id @default(uuid())   // UUID primary key
+  name      String
+  members   FactionMember[]
+  createdAt DateTime        @default(now())
+}
+
+model FactionMember {
+  factionId String
+  faction   Faction         @relation(fields: [factionId], references: [id])
+  houseId   String
+  house     House           @relation(fields: [houseId], references: [id])
+  joinedAt  DateTime        @default(now())
+
+  @@id([factionId, houseId])                       // composite primary key
+}
