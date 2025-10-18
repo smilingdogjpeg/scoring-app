@@ -1,4 +1,3 @@
--- CreateTable
 CREATE TABLE "House" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -9,7 +8,7 @@ CREATE TABLE "House" (
     CONSTRAINT "House_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
+
 CREATE TABLE "Member" (
     "id" TEXT NOT NULL,
     "houseId" TEXT NOT NULL,
@@ -20,7 +19,7 @@ CREATE TABLE "Member" (
     CONSTRAINT "Member_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
+
 CREATE TABLE "Score" (
     "id" TEXT NOT NULL,
     "houseId" TEXT NOT NULL,
@@ -34,7 +33,6 @@ CREATE TABLE "Score" (
     CONSTRAINT "Score_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "Faction" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -43,7 +41,7 @@ CREATE TABLE "Faction" (
     CONSTRAINT "Faction_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
+
 CREATE TABLE "FactionMember" (
     "factionId" TEXT NOT NULL,
     "houseId" TEXT NOT NULL,
@@ -52,20 +50,20 @@ CREATE TABLE "FactionMember" (
     CONSTRAINT "FactionMember_pkey" PRIMARY KEY ("factionId","houseId")
 );
 
--- CreateIndex
+
 CREATE UNIQUE INDEX "House_joinCode_key" ON "House"("joinCode");
 
--- CreateIndex
+
 CREATE UNIQUE INDEX "Member_houseId_clientId_key" ON "Member"("houseId", "clientId");
 
--- AddForeignKey
+
 ALTER TABLE "Member" ADD CONSTRAINT "Member_houseId_fkey" FOREIGN KEY ("houseId") REFERENCES "House"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- AddForeignKey
+
 ALTER TABLE "Score" ADD CONSTRAINT "Score_houseId_fkey" FOREIGN KEY ("houseId") REFERENCES "House"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- AddForeignKey
+
 ALTER TABLE "FactionMember" ADD CONSTRAINT "FactionMember_factionId_fkey" FOREIGN KEY ("factionId") REFERENCES "Faction"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- AddForeignKey
+
 ALTER TABLE "FactionMember" ADD CONSTRAINT "FactionMember_houseId_fkey" FOREIGN KEY ("houseId") REFERENCES "House"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
