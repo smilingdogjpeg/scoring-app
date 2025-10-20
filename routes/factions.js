@@ -21,9 +21,14 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Create a new faction
+// Create a new faction (ADMIN ONLY)
 router.post('/', async (req, res) => {
   try {
+    const { adminPassword } = req.headers;
+    if (adminPassword !== process.env.ADMIN_KEY) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
     const { name } = req.body;
     const faction = await prisma.faction.create({ data: { name } });
     res.status(201).json(faction);
@@ -33,9 +38,14 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Add a house to a faction
+// Add a house to a faction (ADMIN ONLY)
 router.post('/join', async (req, res) => {
   try {
+    const { adminPassword } = req.headers;
+    if (adminPassword !== process.env.ADMIN_KEY) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
     const { factionId, houseId } = req.body;
 
     const factionMember = await prisma.factionMember.create({
@@ -49,9 +59,14 @@ router.post('/join', async (req, res) => {
   }
 });
 
-// Remove a house from a faction
+// Remove a house from a faction (ADMIN ONLY)
 router.post('/leave', async (req, res) => {
   try {
+    const { adminPassword } = req.headers;
+    if (adminPassword !== process.env.ADMIN_KEY) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
     const { factionId, houseId } = req.body;
 
     await prisma.factionMember.delete({
