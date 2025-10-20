@@ -1,16 +1,15 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-
+import gameRoutes from './routes/games.js'
 import houseRoutes from './routes/houses.js';
 import factionRoutes from './routes/factions.js';
 import gameRoutes from './routes/games.js';
 import scoreRoutes from './routes/scores.js';
 
 dotenv.config();
+
 const app = express();
-
-
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 
