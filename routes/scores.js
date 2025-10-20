@@ -1,4 +1,3 @@
-// routes/scores.js
 import { Router } from 'express';
 import prisma from '../lib/db.js';
 
@@ -17,7 +16,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Admin: update or add score for a house
+// Update or add score for a house (ADMIN ONLY)
 router.post('/update', async (req, res) => {
   try {
     const { adminPassword } = req.headers;

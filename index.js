@@ -1,22 +1,27 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import prisma from './lib/db.js';
-import housesRouter from './routes/houses.js';
-import membersRouter from './routes/members.js';
-import scoresRouter from './routes/scores.js';
-import factionsRouter from './routes/factions.js';
+
+import houseRoutes from './routes/houses.js';
+import factionRoutes from './routes/factions.js';
+import gameRoutes from './routes/games.js';
+import scoreRoutes from './routes/scores.js';
 
 dotenv.config();
-
 const app = express();
-app.use(cors());
+
+
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
+app.use(cors({ origin: allowedOrigins, credentials: true }));
+
+
 app.use(express.json());
 
-app.use('/api/houses', housesRouter);
-app.use('/api/members', membersRouter);
-app.use('/api/scores', scoresRouter);
-app.use('/api/factions', factionsRouter);
+app.use('/api/houses', houseRoutes);
+app.use('/api/factions', factionRoutes);
+app.use('/api/games', gameRoutes);
+app.use('/api/scores', scoreRoutes);
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

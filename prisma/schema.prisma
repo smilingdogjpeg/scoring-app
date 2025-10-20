@@ -8,52 +8,73 @@ datasource db {
 }
 
 model House {
-  id        String          @id @default(uuid())   // UUID primary key
+  id        Int       @id @default(autoincrement())
   name      String
-  crestUrl  String?                                   // optional image URL
-  joinCode  String          @unique
-  members   Member[]
+  motto     String
+  crestUrl  String?
+  strength  Humour
+  weakness  Humour
+  faction   Faction?  @relation(fields: [factionId], references: [id])
+  factionId Int?
   scores    Score[]
-  factions  FactionMember[]
-  createdAt DateTime        @default(now())
+  history   History[]
+  members   Member[]
+  createdAt DateTime  @default(now())
 }
 
 model Member {
-  id        String          @id @default(uuid())   // UUID primary key
-  houseId   String
-  house     House           @relation(fields: [houseId], references: [id])
-  clientId  String                                   // identifies device/user
-  name      String
-  joinedAt  DateTime      @default(now())
+  id       Int      @id @default(autoincrement())
+  house    House    @relation(fields: [houseId], references: [id])
+  houseId  Int
+  clientId String   @unique
+  name     String?
+  joinedAt DateTime @default(now())
+}
 
-  @@unique([houseId, clientId])                      // prevents duplicate membership
+model Faction {
+  id        Int      @id @default(autoincrement())
+  name      String
+  motto     String?
+  houses    House[]
+  createdAt DateTime @default(now())
+}
+
+model Game {
+  id        Int       @id @default(autoincrement())
+  name      String
+  scores    Score[]
+  histories History[]
+  createdAt DateTime  @default(now())
 }
 
 model Score {
-  id          String       @id @default(uuid())   // UUID primary key
-  houseId     String
-  house       House       @relation(fields: [houseId], references: [id])
-  gameDay     Int
+  id          Int       @id @default(autoincrement())
+  house       House     @relation(fields: [houseId], references: [id])
+  houseId     Int
+  game        Game      @relation(fields: [gameId], references: [id])
+  gameId      Int
+  histories   History[]
   choleric    Int
   melancholic Int
   sanguine    Int
   phlegmatic  Int
-  createdAt   DateTime    @default(now())
+  createdAt   DateTime  @default(now())
 }
 
-model Faction {
-  id        String          @id @default(uuid())   // UUID primary key
-  name      String
-  members   FactionMember[]
-  createdAt DateTime        @default(now())
+model History {
+  id        Int      @id @default(autoincrement())
+  house     House    @relation(fields: [houseId], references: [id])
+  houseId   Int
+  game      Game     @relation(fields: [gameId], references: [id])
+  gameId    Int
+  score     Score    @relation(fields: [scoreId], references: [id])
+  scoreId   Int
+  createdAt DateTime @default(now())
 }
 
-model FactionMember {
-  factionId String
-  faction   Faction         @relation(fields: [factionId], references: [id])
-  houseId   String
-  house     House           @relation(fields: [houseId], references: [id])
-  joinedAt  DateTime        @default(now())
-
-  @@id([factionId, houseId])                       // composite primary key
+enum Humour {
+  choleric
+  melancholic
+  sanguine
+  phlegmatic
 }

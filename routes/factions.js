@@ -1,4 +1,3 @@
-// routes/factions.js
 import { Router } from 'express';
 import prisma from '../lib/db.js';
 
@@ -78,6 +77,27 @@ router.post('/leave', async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Failed to leave faction' });
   }
+});
+
+// Create faction *and* add houses at same time (ADMIN ONLY)
+router.post('/create-with-houses', async (req, res) => {
+  const { name, houseIds } = req.body;
+  const adminPassword = req.headers.adminpassword;
+
+  if (adminPassword !== process.env.ADMIN_KEY)
+    return res.status(401).json({ error: 'Unauthorized' });
+
+  const faction = await prisma.faction.create({
+    data: {
+      name,
+      members: {
+        create: houseIds.map(houseId => ({ houseId })),
+      },
+    },
+    include: { members: true },
+  });
+
+  res.json(faction);
 });
 
 export default router;
