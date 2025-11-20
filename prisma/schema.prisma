@@ -7,6 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Humour {
+  choleric
+  phlegmatic
+  melancholic
+  sanguine
+}
+
 model House {
   id        Int       @id @default(autoincrement())
   name      String
@@ -14,67 +21,38 @@ model House {
   crestUrl  String?
   strength  Humour
   weakness  Humour
+  password  String
+  factionId Int?      
   faction   Faction?  @relation(fields: [factionId], references: [id])
-  factionId Int?
   scores    Score[]
-  history   History[]
-  members   Member[]
   createdAt DateTime  @default(now())
-}
-
-model Member {
-  id       Int      @id @default(autoincrement())
-  house    House    @relation(fields: [houseId], references: [id])
-  houseId  Int
-  clientId String   @unique
-  name     String?
-  joinedAt DateTime @default(now())
 }
 
 model Faction {
-  id        Int      @id @default(autoincrement())
-  name      String
-  motto     String?
-  houses    House[]
-  createdAt DateTime @default(now())
-}
-
-model Game {
   id        Int       @id @default(autoincrement())
   name      String
-  scores    Score[]
-  histories History[]
+  motto     String
+  houses    House[]
   createdAt DateTime  @default(now())
 }
 
+model Game {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  scores      Score[]
+  createdAt   DateTime @default(now())
+}
+
 model Score {
-  id          Int       @id @default(autoincrement())
-  house       House     @relation(fields: [houseId], references: [id])
+  id          Int      @id @default(autoincrement())
+  house       House    @relation(fields: [houseId], references: [id])
   houseId     Int
-  game        Game      @relation(fields: [gameId], references: [id])
+  game        Game     @relation(fields: [gameId], references: [id])
   gameId      Int
-  histories   History[]
   choleric    Int
+  phlegmatic  Int
   melancholic Int
   sanguine    Int
-  phlegmatic  Int
-  createdAt   DateTime  @default(now())
-}
-
-model History {
-  id        Int      @id @default(autoincrement())
-  house     House    @relation(fields: [houseId], references: [id])
-  houseId   Int
-  game      Game     @relation(fields: [gameId], references: [id])
-  gameId    Int
-  score     Score    @relation(fields: [scoreId], references: [id])
-  scoreId   Int
-  createdAt DateTime @default(now())
-}
-
-enum Humour {
-  choleric
-  melancholic
-  sanguine
-  phlegmatic
+  createdAt   DateTime @default(now())
 }

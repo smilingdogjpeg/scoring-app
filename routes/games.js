@@ -1,80 +1,106 @@
-import express from "express";
-import prisma from "../lib/db.js";
+import express from 'express';
+import prisma from '../lib/db.js';
 
 const router = express.Router();
 
-// CREATE a new game
-router.post("/", async (req, res) => {
-  try {
-    const { name } = req.body;
+// helper: map to IGame
+function toIGame(game, houseMap) {
+  return {
+    id: game.id,
+    name: game.name,
+    description: game.description || undefined,
+    scores: game.scores.map(s => ({
+      houseId: s.houseId,
+      houseName: houseMap.get(s.houseId),
+      score: {
+        choleric: s.choleric,
+        phlegmatic: s.phlegmatic,
+        melancholic: s.melancholic,
+        sanguine: s.sanguine,
+      },
+    })),
+  };
+}
 
-    if (!name) {
-      return res.status(400).json({ error: "Game name is required" });
+// GET /api/games → Array<IGame>
+router.get('/', async (req, res) => {
+  try {
+    const [games, houses] = await Promise.all([
+      prisma.game.findMany({
+        include: { scores: true },
+        orderBy: { id: 'asc' },
+      }),
+      prisma.house.findMany(),
+    ]);
+
+    const houseMap = new Map(houses.map(h => [h.id, h.name]));
+
+    const result = games.map(game => toIGame(game, houseMap));
+    res.json(result);
+  } catch (err) {
+    console.error('Error fetching games', err);
+    res.status(500).json({ error: 'Failed to fetch games' });
+  }
+});
+
+// POST /api/games → IPostGame (name, scores[], description?)
+router.post('/', async (req, res) => {
+  try {
+    const { name, description, scores } = req.body;
+
+    if (!name || !Array.isArray(scores) || scores.length === 0) {
+      return res.status(400).json({ error: 'name and scores[] are required' });
     }
 
     const game = await prisma.game.create({
-      data: { name },
-    });
-
-    res.status(201).json(game);
-  } catch (error) {
-    console.error("Error creating game:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// GET all games
-router.get("/", async (req, res) => {
-  try {
-    const games = await prisma.game.findMany({
-      include: {
-        scores: true, // includes related scores if any
+      data: {
+        name,
+        description: description || null,
       },
     });
 
-    res.json(games);
-  } catch (error) {
-    console.error("Error fetching games:", error);
-    res.status(500).json({ error: "Internal server error" });
+    // create score rows
+    const scoreCreates = scores.map((s) => ({
+      houseId: s.houseId,
+      gameId: game.id,
+      choleric: s.score.choleric,
+      phlegmatic: s.score.phlegmatic,
+      melancholic: s.score.melancholic,
+      sanguine: s.score.sanguine,
+    }));
+
+    await prisma.score.createMany({ data: scoreCreates });
+
+    // reload with scores for response
+    const [savedGame, houses] = await Promise.all([
+      prisma.game.findUnique({
+        where: { id: game.id },
+        include: { scores: true },
+      }),
+      prisma.house.findMany(),
+    ]);
+
+    const houseMap = new Map(houses.map(h => [h.id, h.name]));
+
+    res.status(201).json(toIGame(savedGame, houseMap));
+  } catch (err) {
+    console.error('Error creating game', err);
+    res.status(500).json({ error: 'Failed to create game' });
   }
 });
 
-// GET a single game by ID
-router.get("/:id", async (req, res) => {
+// DELETE /api/games/:id
+router.delete('/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (Number.isNaN(id)) return res.status(400).json({ error: 'Invalid id' });
+
   try {
-    const gameId = parseInt(req.params.id);
-
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-      include: {
-        scores: {
-          include: { house: true }, // shows which house got what score
-        },
-      },
-    });
-
-    if (!game) return res.status(404).json({ error: "Game not found" });
-
-    res.json(game);
-  } catch (error) {
-    console.error("Error fetching game:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// DELETE a game
-router.delete("/:id", async (req, res) => {
-  try {
-    const gameId = parseInt(req.params.id);
-
-    await prisma.game.delete({
-      where: { id: gameId },
-    });
-
-    res.json({ message: "Game deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting game:", error);
-    res.status(500).json({ error: "Internal server error" });
+    await prisma.score.deleteMany({ where: { gameId: id } });
+    await prisma.game.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting game', err);
+    res.status(500).json({ error: 'Failed to delete game' });
   }
 });
 

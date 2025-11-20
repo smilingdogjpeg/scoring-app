@@ -1,103 +1,86 @@
-import { Router } from 'express';
+import express from 'express';
 import prisma from '../lib/db.js';
 
-const router = Router();
+const router = express.Router();
 
-// Get all factions with their houses
+// helper to map to frontend shape: { id, name, motto, houseIds }
+function toIFaction(faction) {
+  return {
+    id: faction.id,
+    name: faction.name,
+    motto: faction.motto,
+    houseIds: faction.houses.map(h => h.id),
+  };
+}
+
+// GET /api/factions → Array<IFaction & {id}>
 router.get('/', async (req, res) => {
   try {
     const factions = await prisma.faction.findMany({
-      include: {
-        members: {
-          include: { house: true },
-        },
-      },
+      include: { houses: true },
+      orderBy: { id: 'asc' },
     });
-    res.json(factions);
+
+    res.json(factions.map(toIFaction));
   } catch (err) {
-    console.error(err);
+    console.error('Error fetching factions', err);
     res.status(500).json({ error: 'Failed to fetch factions' });
   }
 });
 
-// Create a new faction (ADMIN ONLY)
+// POST /api/factions → IFaction ({ name, motto, houseIds })
 router.post('/', async (req, res) => {
   try {
-    const { adminPassword } = req.headers;
-    if (adminPassword !== process.env.ADMIN_KEY) {
-      return res.status(403).json({ error: 'Forbidden' });
+    const { name, motto, houseIds } = req.body;
+
+    if (!name || !motto || !Array.isArray(houseIds) || houseIds.length === 0) {
+      return res.status(400).json({ error: 'name, motto and houseIds are required' });
     }
 
-    const { name } = req.body;
-    const faction = await prisma.faction.create({ data: { name } });
-    res.status(201).json(faction);
+    const faction = await prisma.faction.create({
+      data: {
+        name,
+        motto,
+      },
+    });
+
+    // attach houses to this faction
+    await prisma.house.updateMany({
+      where: { id: { in: houseIds } },
+      data: { factionId: faction.id },
+    });
+
+    const withHouses = await prisma.faction.findUnique({
+      where: { id: faction.id },
+      include: { houses: true },
+    });
+
+    res.status(201).json(toIFaction(withHouses));
   } catch (err) {
-    console.error(err);
+    console.error('Error creating faction', err);
     res.status(500).json({ error: 'Failed to create faction' });
   }
 });
 
-// Add a house to a faction (ADMIN ONLY)
-router.post('/join', async (req, res) => {
+// DELETE /api/factions/:id
+router.delete('/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (Number.isNaN(id)) return res.status(400).json({ error: 'Invalid id' });
+
   try {
-    const { adminPassword } = req.headers;
-    if (adminPassword !== process.env.ADMIN_KEY) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-
-    const { factionId, houseId } = req.body;
-
-    const factionMember = await prisma.factionMember.create({
-      data: { factionId, houseId },
+    // detach houses
+    await prisma.house.updateMany({
+      where: { factionId: id },
+      data: { factionId: null },
     });
 
-    res.status(201).json(factionMember);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to join faction' });
-  }
-});
-
-// Remove a house from a faction (ADMIN ONLY)
-router.post('/leave', async (req, res) => {
-  try {
-    const { adminPassword } = req.headers;
-    if (adminPassword !== process.env.ADMIN_KEY) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-
-    const { factionId, houseId } = req.body;
-
-    await prisma.factionMember.delete({
-      where: { factionId_houseId: { factionId, houseId } },
-    });
+    await prisma.faction.delete({ where: { id } });
 
     res.json({ success: true });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to leave faction' });
+    console.error('Error deleting faction', err);
+    res.status(500).json({ error: 'Failed to delete faction' });
   }
-});
-
-// Create faction *and* add houses at same time (ADMIN ONLY)
-router.post('/create-with-houses', async (req, res) => {
-  const { name, houseIds } = req.body;
-  const adminPassword = req.headers.adminpassword;
-
-  if (adminPassword !== process.env.ADMIN_KEY)
-    return res.status(401).json({ error: 'Unauthorized' });
-
-  const faction = await prisma.faction.create({
-    data: {
-      name,
-      members: {
-        create: houseIds.map(houseId => ({ houseId })),
-      },
-    },
-    include: { members: true },
-  });
-
-  res.json(faction);
 });
 
 export default router;

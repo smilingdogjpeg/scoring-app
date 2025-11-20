@@ -5,7 +5,10 @@
   "private": true,
   "scripts": {
     "start": "node index.js",
-    "lint": "eslint"
+    "seed:test": "cross-env NODE_ENV=test node prisma/seedTest.js",
+    "test": "cross-env NODE_ENV=test jest --runInBand --env=node",
+    "lint": "eslint",
+    "dev": "node index.js"
   },
   "dependencies": {
     "@prisma/client": "^6.17.1",
@@ -19,9 +22,12 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "autoprefixer": "^10.4.21",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
+    "jest": "^30.2.0",
     "postcss": "^8.5.6",
-    "prisma": "^6.16.3"
+    "prisma": "^6.16.3",
+    "supertest": "^7.1.4"
   }
 }
