@@ -16,7 +16,7 @@ PostgreSQL (Supabase)
 
 Prisma ORM
 
-Render (deployment)
+Vercel (deployment)
 
 dotenv
 
