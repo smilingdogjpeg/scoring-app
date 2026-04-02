@@ -207,6 +207,52 @@ Base URL: https://YOUR-RENDER-APP.onrender.com
 
 Fetch houses: GET /api/houses
 
+## Debugging & Reliability Approach
+
+This project was also used as an opportunity to focus on debugging, reliability, and maintainability, not just feature development.
+
+**Error Handling**
+
+Implemented consistent error responses across API endpoints
+Validates incoming data and returns meaningful error messages
+Handles edge cases such as missing or invalid inputs
+
+**Testing**
+
+Used automated testing (e.g. Jest) to verify endpoint behaviour
+
+Tested both expected outcomes and failure scenarios
+
+Helped identify issues early and ensure consistent behaviour
+
+**Reproducing Issues**
+
+When bugs occurred during development, I followed a structured approach:
+
+1. Reproduce the issue locally using the same request/data
+
+2. Trace the request through the controller, model, and database layers
+
+3. Identify where the unexpected behaviour occurs
+
+4. Implement a fix and add tests to prevent regression
+
+**Data Integrity**
+
+Designed relational schema using PostgreSQL and Prisma
+
+Ensured relationships between entities (House, Game, Score) were enforced
+
+Considered how invalid or inconsistent data could impact the system
+
+Future Improvements
+
+Add structured logging for better visibility into runtime errors
+
+Improve validation using dedicated schemas
+
+Introduce monitoring for deployed environments
+
 ## Future Improvements
 
 Replace admin password with real authentication
