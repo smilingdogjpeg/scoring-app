@@ -1,7 +1,6 @@
 # Scoring App – Backend API
 
-This repository contains the backend API for the Scoring App.
-
+Built for real-world use at a live event, handling concurrent score submissions and real-time updates.
 It provides endpoints to manage Houses, Factions, and Games, and aggregates scores across multiple games using a PostgreSQL database hosted on Supabase.
 
 The backend is built with Node.js, Express, and Prisma, and is deployed on Render.
